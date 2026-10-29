@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { CARDS, RARITY_ORDER } from "@/data/cards";
+import { PRICES, collectionValue } from "@/data/prices";
 import type { Card, Rarity } from "@/types/card";
+import { won } from "./Shop";
 
 interface Props {
   collection: Record<string, number>;
@@ -23,6 +25,11 @@ export function CardLightbox({ card, count, onClose }: { card: Card; count?: num
       <p className="text-sm text-white/80">
         {card.id} · {card.name} · <b className="text-yellow-300">{card.rarity}</b>
         {count ? ` · ${count}장 보유` : ""}
+      </p>
+      <p className="-mt-2 text-xs text-white/60">
+        {PRICES[card.id].won > 0
+          ? `시세 ${won(PRICES[card.id].won)} (${PRICES[card.id].source === "kr" ? "한글판 실거래" : "추정"})`
+          : "시세 거의 없음"}
       </p>
     </div>
   );
@@ -55,6 +62,7 @@ export default function CollectionModal({ collection, onClose }: Props) {
         <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-6">
           <h2 className="text-base font-bold">
             도감 <span className="text-sm font-semibold text-white/60">{owned} / {CARDS.length}</span>
+            <span className="ml-3 text-sm font-semibold text-yellow-300">{won(collectionValue(collection))}</span>
           </h2>
           <button
             type="button"
@@ -107,6 +115,11 @@ export default function CollectionModal({ collection, onClose }: Props) {
                 <span className="absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white/80">
                   {c.rarity}
                 </span>
+                {count > 0 && PRICES[c.id].won >= 1000 && (
+                  <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[9px] font-bold text-yellow-200">
+                    {won(PRICES[c.id].won)}
+                  </span>
+                )}
                 {count > 1 && (
                   <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[10px] font-bold text-yellow-300">
                     ×{count}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { CARDS } from "@/data/cards";
+import { collectionValue, priceOf } from "@/data/prices";
 import { seeded } from "@/lib/random";
 import { usePackStore } from "@/store/usePackStore";
 import type { Card } from "@/types/card";
@@ -11,6 +12,7 @@ import CardPack from "./CardPack";
 import CardStack from "./CardStack";
 import CollectionModal, { CardLightbox } from "./CollectionModal";
 import Shop, { won } from "./Shop";
+import { PACK_PRICE } from "@/data/rates";
 
 const TEAR_MS = 1250;
 const OPEN_MS = 850;
@@ -82,6 +84,9 @@ export default function PackOpener() {
   }, [phase, setPhase]);
 
   const owned = Object.keys(collection).length;
+  const value = collectionValue(collection);
+  const profit = value - spent;
+  const packValue = cards.reduce((s, c) => s + priceOf(c.id), 0);
   const best = cards[cards.length - 1];
   const packStage = phase === "idle" || phase === "tearing" || phase === "opening";
 
@@ -98,6 +103,14 @@ export default function PackOpener() {
           <span className={chip}>
             쓴 돈 <b className="text-yellow-300">{won(spent)}</b>
           </span>
+          <span className={chip} title="보유 카드의 한글판 시세 합 (일부 추정치)">
+            보유 가치 <b>{won(value)}</b>
+          </span>
+          {spent > 0 && (
+            <span className={`${chip} ${profit >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
+              손익 <b>{profit >= 0 ? "+" : "−"}{won(Math.abs(profit))}</b>
+            </span>
+          )}
           <span className={chip}>개봉 {packsOpened}팩</span>
           {unopened.length > 0 && <span className={chip}>남은 팩 {unopened.length}</span>}
           {phase !== "shop" && (
@@ -164,12 +177,19 @@ export default function PackOpener() {
                   <span className="absolute left-1 top-1 rounded bg-black/60 px-1 text-[10px] font-bold">
                     {c.rarity}
                   </span>
+                  {priceOf(c.id) > 0 && (
+                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[10px] font-bold text-yellow-300">
+                      {won(priceOf(c.id))}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
             {best && (
               <p className="text-center text-sm text-white/80">
-                이번 팩 최고 카드: <b className="text-yellow-300">{best.name}</b> ({best.rarity})
+                이번 팩 최고 카드: <b className="text-yellow-300">{best.name}</b> ({best.rarity}) · 팩 가치{" "}
+                <b className={packValue >= PACK_PRICE ? "text-emerald-300" : "text-white"}>{won(packValue)}</b>
+                <span className="text-white/50"> / 팩 가격 {won(PACK_PRICE)}</span>
               </p>
             )}
             <button

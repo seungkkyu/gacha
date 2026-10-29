@@ -12,6 +12,7 @@ import {
   PACKS_PER_BOX,
   SR_PLUS_RATES,
 } from "@/data/rates";
+import { expectedPackValue, PRICE_DATE } from "@/data/prices";
 import type { Rarity } from "@/types/card";
 
 export const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -79,6 +80,7 @@ export default function Shop({ spent, unopened, onBuy, onBack }: Props) {
   const [packs, setPacks] = useState(0);
   const total = boxes * BOX_PRICE + packs * PACK_PRICE;
   const count = boxes * PACKS_PER_BOX + packs;
+  const expected = expectedPackValue() * count;
 
   return (
     <div className="fade-up w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur sm:p-6">
@@ -135,6 +137,15 @@ export default function Shop({ spent, unopened, onBuy, onBack }: Props) {
         </div>
       </div>
 
+      {count > 0 && (
+        <p className="mt-3 text-center text-xs text-white/70">
+          기대 가치 약 <b className="text-white">{won(Math.round(expected / 100) * 100)}</b> ·{" "}
+          <b className={expected >= total ? "text-emerald-300" : "text-rose-300"}>
+            평균 {expected >= total ? "이득" : "손해"} {won(Math.round(Math.abs(total - expected) / 100) * 100)}
+          </b>
+        </p>
+      )}
+
       <button
         type="button"
         disabled={count === 0}
@@ -180,6 +191,11 @@ export default function Shop({ spent, unopened, onBuy, onBack }: Props) {
           </li>
           <li>나머지 레어 슬롯은 R</li>
         </ul>
+        <p className="mt-3 font-semibold text-white/70">시세 ({PRICE_DATE} 기준)</p>
+        <p className="mt-1 leading-relaxed">
+          한글판 실거래가(KREAM)가 있는 카드는 그 값을, 나머지는 일본판 매입가를 한글판 비율로 환산한
+          추정치를 씁니다. C·U·R 은 0원으로 봅니다. 기대 가치는 확률 × 시세의 평균값이라 실제 결과와 다를 수 있습니다.
+        </p>
       </details>
     </div>
   );
