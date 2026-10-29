@@ -33,3 +33,6 @@ export const CARDS_BY_RARITY = Object.fromEntries(
 ) as Record<Rarity, Card[]>;
 
 export const PACK_IMAGE = `/cards/${M6.setCode}/pack.webp`;
+
+/** 카드 뒷면. 저작권 때문에 저장소에 없으며 직접 넣어야 함 (없으면 그려 둔 뒷면으로 대체) */
+export const CARD_BACK = "/cards/back.webp";

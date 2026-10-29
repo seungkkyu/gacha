@@ -6,6 +6,7 @@ import { CARDS } from "@/data/cards";
 import { seeded } from "@/lib/random";
 import { usePackStore } from "@/store/usePackStore";
 import type { Card } from "@/types/card";
+import CardBack from "./CardBack";
 import CardPack from "./CardPack";
 import CardStack from "./CardStack";
 import CollectionModal, { CardLightbox } from "./CollectionModal";
@@ -128,9 +129,11 @@ export default function PackOpener() {
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="absolute inset-0 rounded-[14px] border-2 border-yellow-300/70 bg-gradient-to-br from-[#1e3a8a] to-[#0f172a] shadow-[0_0_40px_rgba(255,240,180,0.6)]"
+                      className="absolute inset-0 rounded-[14px] shadow-[0_0_40px_rgba(255,240,180,0.6)]"
                       style={{ transform: `rotate(${(i - 1) * 5}deg) translateY(${i * -4}px)` }}
-                    />
+                    >
+                      <CardBack />
+                    </div>
                   ))}
                 </div>
               )}
