@@ -2,16 +2,16 @@
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { PulledCard } from "@/types/card";
-import CardBack from "./CardBack";
 import CardView from "./CardView";
 
-const SWIPE_MS = 750;
-/** 위로 끈 거리(px) → 넘어간 각도(deg) */
-const DRAG_TO_DEG = 0.55;
-/** 이 각도 이상 넘기고 놓으면 넘어감 */
-const FLIP_THRESHOLD_DEG = 35;
+const SWIPE_MS = 700;
+/** 이만큼 위로 끌고 놓으면 넘김 (px) */
+const SWIPE_THRESHOLD = 50;
 /** 더미에서 보여줄 최대 깊이 */
 const VISIBLE_DEPTH = 4;
+
+/** 더미 깊이별 위치: 뒤로 갈수록 조금씩 아래로 삐져나오고 작아짐 */
+const depthTransform = (depth: number) => `translateY(${depth * 12}px) scale(${1 - depth * 0.04})`;
 
 interface Props {
   cards: PulledCard[];
@@ -21,20 +21,18 @@ interface Props {
 }
 
 /**
- * 카드 더미. 맨 위 카드는 윗변이 경첩처럼 고정돼, 위로 끌거나 클릭하면
- * 달력 넘기듯 위로 젖혀지며(뒷면이 보임) 날아가고 다음 카드가 드러남
+ * 카드 더미. 실물 팩을 볼 때처럼 맨 앞 카드를 위로 뽑아 올려 더미 맨 뒤로 넘김.
+ * 본 카드는 사라지지 않고 뒤에 쌓이며, 다음 카드가 앞으로 올라옴
  */
 export default function CardStack({ cards, top, onSwipe, onSkip }: Props) {
-  const [leaving, setLeaving] = useState<{ uid: string; fromDeg: number } | null>(null);
+  const [leaving, setLeaving] = useState<{ uid: string; fromY: number } | null>(null);
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
   const startY = useRef(0);
 
-  const angle = Math.min(170, Math.max(0, -dragY * DRAG_TO_DEG));
-
-  const swipe = (fromDeg = 0) => {
+  const swipe = (fromY = 0) => {
     if (leaving || top >= cards.length) return;
-    setLeaving({ uid: cards[top].uid, fromDeg });
+    setLeaving({ uid: cards[top].uid, fromY });
     setDragY(0);
     setTimeout(() => {
       onSwipe();
@@ -58,46 +56,40 @@ export default function CardStack({ cards, top, onSwipe, onSkip }: Props) {
     if (!dragging) return;
     setDragging(false);
     // 거의 안 움직였으면 클릭으로 보고 넘김
-    if (angle > FLIP_THRESHOLD_DEG || Math.abs(dragY) < 6) swipe(angle);
+    if (dragY < -SWIPE_THRESHOLD || Math.abs(dragY) < 6) swipe(dragY);
     else setDragY(0);
   };
 
-  // 넘어가는 중인 카드 다음 장이 실제로 보이는 맨 위 카드
-  const shownTop = leaving ? top + 1 : top;
+  // 넘어가는 중이면 그 카드는 이미 맨 뒤로 간 것으로 보고 순서를 매김
+  const front = leaving ? top + 1 : top;
+  // 앞으로 볼 카드 → 이미 본 카드(뒤에 쌓임) 순서
+  const order = [...cards.slice(front), ...cards.slice(0, front)];
 
   return (
     <div className="flex flex-col items-center">
-      <div
-        className="relative mt-[120px] h-[336px] w-[240px] sm:h-[392px] sm:w-[280px]"
-        style={{ perspective: "1600px", transformStyle: "preserve-3d" }}
-      >
-        {cards.map((card, i) => {
-          if (i < top) return null;
+      <div className="relative mt-16 h-[336px] w-[240px] sm:h-[392px] sm:w-[280px]">
+        {cards.map((card) => {
+          const depth = order.indexOf(card);
           const isLeaving = leaving?.uid === card.uid;
-          const isTop = i === top && !leaving;
-          const depth = Math.max(0, i - shownTop);
-          if (depth > VISIBLE_DEPTH) return null;
+          const isTop = depth === 0 && !leaving && top < cards.length;
 
           const style = {
-            zIndex: cards.length - i,
-            "--from-deg": `${leaving?.fromDeg ?? 0}deg`,
-            transformOrigin: "50% 0%",
-            transformStyle: "preserve-3d",
+            zIndex: cards.length - depth,
+            "--from-y": `${leaving?.fromY ?? 0}px`,
+            "--back": depthTransform(depth),
             transform: isLeaving
               ? undefined
-              : isTop
-                ? // 아래로 끌면 살짝 내려가기만, 위로 끌면 경첩 회전
-                  dragY > 0
-                  ? `translateY(${dragY}px)`
-                  : `rotateX(${angle}deg)`
-                : `translateY(${depth * 10}px) scale(${1 - depth * 0.04})`,
-            transition: isTop && dragging ? "none" : "transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1)",
+              : isTop && dragY
+                ? `translateY(${dragY}px) rotate(${dragY * -0.02}deg)`
+                : depthTransform(depth),
+            opacity: depth > VISIBLE_DEPTH ? 0 : 1,
+            transition: isTop && dragging ? "none" : "transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.05)",
           } as CSSProperties;
 
           return (
             <div
               key={card.uid}
-              className={`absolute inset-0 ${isLeaving ? "card-flip-up" : ""} ${
+              className={`absolute inset-0 ${isLeaving ? "card-to-back" : ""} ${
                 isTop ? "cursor-grab touch-none active:cursor-grabbing" : "pointer-events-none"
               }`}
               style={style}
@@ -108,28 +100,25 @@ export default function CardStack({ cards, top, onSwipe, onSkip }: Props) {
               onKeyDown={isTop ? (e) => (e.key === "Enter" || e.key === " ") && swipe() : undefined}
               role={isTop ? "button" : undefined}
               tabIndex={isTop ? 0 : -1}
-              aria-label={isTop ? `${card.name} (${card.rarity}) — 넘기기` : undefined}
+              aria-label={isTop ? `${card.name} (${card.rarity}) — 뒤로 넘기기` : undefined}
             >
-              {/* 앞면 (아래 깔린 카드는 어둡게) */}
-              <div className={`backface-hidden h-full ${depth > 0 ? "brightness-[0.55]" : ""}`}>
-                <CardView card={card} active={i === shownTop} priority={i <= 1} />
+              {/* 뒤에 깔린 카드는 어둡게 */}
+              <div
+                className="h-full transition-[filter] duration-300"
+                style={{ filter: depth > 0 && !isLeaving ? "brightness(0.55)" : undefined }}
+              >
+                <CardView card={card} active={depth === 0 && !isLeaving} priority={depth <= 1} />
               </div>
-              {/* 뒷면: 위로 젖혀지면 보임 */}
-              {(isTop || isLeaving) && (
-                <div className="backface-hidden absolute inset-0 [transform:rotateX(180deg)]">
-                  <CardBack />
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-8 flex items-center gap-3 text-sm text-white/70">
+      <div className="mt-10 flex items-center gap-3 text-sm text-white/70">
         <span className="tabular-nums">
-          {Math.min(shownTop + 1, cards.length)} / {cards.length}
+          {Math.min(front + 1, cards.length)} / {cards.length}
         </span>
-        <span className="hint-pulse">위로 넘기거나 클릭</span>
+        <span className="hint-pulse">위로 끌어 뒤로 넘기거나 클릭</span>
         <button
           type="button"
           onClick={onSkip}
