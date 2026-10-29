@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import { useRef, type PointerEvent } from "react";
-import { artworkUrl } from "@/data/pokemon";
-import type { PackPhase } from "@/types/pokemon";
+import { CARDS_BY_RARITY, SET_NAME } from "@/data/cards";
+import type { PackPhase } from "@/types/card";
+
+/** 팩 표지 카드: 세트 최고 레어도 */
+const COVER = CARDS_BY_RARITY.MUR[0];
 
 const TEAR_AT = 17; // 팩 상단에서 뜯기는 위치 (%)
 
@@ -35,7 +38,7 @@ function PackArt() {
 
       {/* 타이틀 */}
       <div className="absolute inset-x-0 top-[22%] flex flex-col items-center">
-        <span className="text-[10px] font-bold tracking-[0.5em] text-white/80">BOOSTER PACK</span>
+        <span className="text-[10px] font-bold tracking-[0.15em] text-white/80">{SET_NAME}</span>
         <span
           className="mt-1 text-4xl font-black italic tracking-tight text-yellow-300"
           style={{ textShadow: "0 3px 0 #1d3a8a, 0 0 18px rgba(255,220,80,.6)" }}
@@ -44,17 +47,17 @@ function PackArt() {
         </span>
       </div>
 
-      {/* 대표 포켓몬 */}
-      <div className="absolute inset-x-0 bottom-[14%] flex justify-center">
-        <div className="relative size-48">
-          <div className="absolute inset-4 rounded-full bg-yellow-200/40 blur-2xl" />
+      {/* 대표 카드 */}
+      <div className="absolute inset-x-0 bottom-[13%] flex justify-center">
+        <div className="relative h-[196px] w-[140px] rotate-[-6deg]">
+          <div className="absolute -inset-4 rounded-full bg-yellow-200/40 blur-2xl" />
           <Image
-            src={artworkUrl(6)}
-            alt="리자몽"
+            src={COVER.image}
+            alt={COVER.name}
             fill
-            sizes="192px"
+            sizes="140px"
             priority
-            className="object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
+            className="rounded-md object-cover shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
           />
         </div>
       </div>

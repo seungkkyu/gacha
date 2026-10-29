@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { POKEMON } from "@/data/pokemon";
+import { CARDS } from "@/data/cards";
 import { seeded } from "@/lib/random";
 import { usePackStore } from "@/store/usePackStore";
 import CardPack from "./CardPack";
@@ -76,7 +76,7 @@ export default function PackOpener() {
         <div className="flex gap-2 text-xs font-semibold text-white/80">
           <span className="rounded-full bg-white/10 px-3 py-1 backdrop-blur">개봉 {packsOpened}팩</span>
           <span className="rounded-full bg-white/10 px-3 py-1 backdrop-blur">
-            도감 {owned}/{POKEMON.length}
+            도감 {owned}/{CARDS.length}
           </span>
         </div>
       </header>
@@ -128,7 +128,7 @@ export default function PackOpener() {
             <div className="fade-up mt-10 flex flex-col items-center gap-4" style={{ animationDelay: "0.8s" }}>
               {best && (
                 <p className="text-center text-sm text-white/80">
-                  이번 팩 최고 카드: <b className="text-yellow-300">{best.name}</b>
+                  이번 팩 최고 카드: <b className="text-yellow-300">{best.name}</b> ({best.rarity})
                 </p>
               )}
               {allFlipped ? (

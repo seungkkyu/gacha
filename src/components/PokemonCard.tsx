@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import { useRef, type CSSProperties, type PointerEvent } from "react";
-import { artworkUrl, RARITY_LABEL, TYPE_COLOR } from "@/data/pokemon";
 import { isShiny } from "@/lib/gacha";
-import type { PulledCard, Rarity } from "@/types/pokemon";
+import type { PulledCard, Tier } from "@/types/card";
 import Particles from "./Particles";
 
-const AURA_COLOR: Record<Rarity, string> = {
+const AURA_COLOR: Record<Tier, string> = {
   common: "transparent",
   uncommon: "#7dd3fc88",
   rare: "#facc15",
@@ -15,7 +14,7 @@ const AURA_COLOR: Record<Rarity, string> = {
   legendary: "",
 };
 
-const PARTICLE_COLORS: Record<Rarity, string[]> = {
+const PARTICLE_COLORS: Record<Tier, string[]> = {
   common: ["#ffffff"],
   uncommon: ["#bae6fd", "#ffffff"],
   rare: ["#fde047", "#fff7cc", "#facc15"],
@@ -48,82 +47,20 @@ function CardBack() {
 }
 
 function CardFront({ card, revealed }: { card: PulledCard; revealed: boolean }) {
-  const color = TYPE_COLOR[card.type];
-  const rarity = RARITY_LABEL[card.rarity];
-  const shiny = isShiny(card.rarity);
-  const legendary = card.rarity === "legendary";
+  const shiny = isShiny(card.tier);
 
   return (
-    <div
-      className="card-face card-front p-[7px] shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-      style={{
-        background: legendary
-          ? "linear-gradient(135deg,#ffe58a,#f5b301 30%,#fff3b0 50%,#d99a00 70%,#ffe58a)"
-          : shiny
-            ? "linear-gradient(135deg,#f5f5f5,#b8b8c8 40%,#ffffff 55%,#9a9aae)"
-            : "linear-gradient(135deg,#fde68a,#facc15)",
-      }}
-    >
-      <div
-        className="relative flex h-full flex-col overflow-hidden rounded-[9px] px-2.5 pb-2 pt-1.5"
-        style={{ background: `linear-gradient(160deg, ${color.from}, ${color.to})` }}
-      >
-        {/* 이름 / HP */}
-        <div className="flex items-baseline justify-between text-[#1a1a1a]">
-          <span className="text-[15px] font-extrabold tracking-tight">{card.name}</span>
-          <span className="text-[11px] font-bold">
-            <span className="text-[8px]">HP</span> {card.hp}
-          </span>
-        </div>
-
-        {/* 아트 창 */}
-        <div
-          className="relative mt-1 aspect-[4/3] w-full overflow-hidden rounded-[4px] border-[3px] border-[#e8d79a] shadow-inner"
-          style={{
-            background: `radial-gradient(circle at 50% 60%, #ffffffcc 0%, ${color.from} 45%, ${color.to} 100%)`,
-          }}
-        >
-          {revealed && (
-            <div className="art-pop absolute inset-1">
-              <Image
-                src={artworkUrl(card.id)}
-                alt={card.name}
-                fill
-                sizes="180px"
-                className="object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.35)]"
-              />
-            </div>
-          )}
-          {shiny && <div className="holo-sparkle pointer-events-none absolute inset-0" />}
-        </div>
-
-        {/* 타입 / 번호 */}
-        <div className="mt-1.5 flex items-center justify-between text-[9px] font-semibold text-[#1a1a1a]/80">
-          <span className="rounded-full bg-white/60 px-2 py-0.5">{color.label} 타입</span>
-          <span>No.{String(card.id).padStart(3, "0")}</span>
-        </div>
-
-        {/* 기술 (장식) */}
-        <div className="mt-1.5 flex-1 rounded-[4px] bg-white/35 px-2 py-1.5 text-[#1a1a1a]">
-          <div className="flex items-center justify-between text-[11px] font-bold">
-            <span>몸통박치기</span>
-            <span>{Math.round(card.hp / 3 / 10) * 10}</span>
-          </div>
-          <div className="mt-1 h-px bg-black/15" />
-          <p className="mt-1 text-[8px] leading-tight text-black/60">
-            팩에서 뽑힌 {rarity.label.toLowerCase()} 카드. 소중히 다뤄주세요.
-          </p>
-        </div>
-
-        {/* 레어도 */}
-        <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-[8px] font-black tracking-widest text-black/70">{rarity.label}</span>
-          <span className={`text-[11px] ${legendary ? "text-yellow-100" : "text-black/70"}`}>
-            {"★".repeat(rarity.stars)}
-          </span>
-        </div>
-      </div>
-
+    <div className="card-face card-front bg-[#111] shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+      {revealed && (
+        <Image
+          src={card.image}
+          alt={`${card.name} (${card.rarity})`}
+          fill
+          sizes="210px"
+          className="art-pop object-cover"
+        />
+      )}
+      {shiny && <div className="holo-sparkle pointer-events-none absolute inset-0" />}
       {shiny && <div className="holo pointer-events-none absolute inset-0 rounded-[14px]" />}
     </div>
   );
@@ -139,8 +76,8 @@ interface Props {
 
 export default function PokemonCard({ card, index, total, flipped, onFlip }: Props) {
   const tiltRef = useRef<HTMLDivElement>(null);
-  const shiny = isShiny(card.rarity);
-  const big = card.rarity === "ultra" || card.rarity === "legendary";
+  const shiny = isShiny(card.tier);
+  const big = card.tier === "ultra" || card.tier === "legendary";
 
   const handleMove = (e: PointerEvent<HTMLDivElement>) => {
     const el = tiltRef.current;
@@ -172,10 +109,10 @@ export default function PokemonCard({ card, index, total, flipped, onFlip }: Pro
     <div className="card-deal relative" style={dealStyle}>
       {/* 레어 오라 */}
       <div
-        className={`aura ${flipped && card.rarity !== "common" ? "on" : ""} ${
-          card.rarity === "legendary" ? "aura-legendary" : ""
+        className={`aura ${flipped && card.tier !== "common" ? "on" : ""} ${
+          card.tier === "legendary" ? "aura-legendary" : ""
         }`}
-        style={card.rarity === "legendary" ? undefined : { background: AURA_COLOR[card.rarity] }}
+        style={card.tier === "legendary" ? undefined : { background: AURA_COLOR[card.tier] }}
       />
 
       {flipped && big && (
@@ -183,10 +120,10 @@ export default function PokemonCard({ card, index, total, flipped, onFlip }: Pro
       )}
       {flipped && shiny && (
         <Particles
-          colors={PARTICLE_COLORS[card.rarity]}
+          colors={PARTICLE_COLORS[card.tier]}
           count={big ? 44 : 26}
           distance={big ? 260 : 170}
-          seed={card.id + index}
+          seed={Number(card.id) + index}
         />
       )}
 
