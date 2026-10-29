@@ -19,4 +19,5 @@ export interface PulledCard extends Card {
   uid: string;
 }
 
-export type PackPhase = "idle" | "tearing" | "opening" | "revealed";
+/** shop: 구매 화면, revealed: 카드 더미 넘기는 중, done: 한 팩 다 넘김 */
+export type PackPhase = "shop" | "idle" | "tearing" | "opening" | "revealed" | "done";

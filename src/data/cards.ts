@@ -31,3 +31,5 @@ export const CARDS: Card[] = M6.cards.map((c) => {
 export const CARDS_BY_RARITY = Object.fromEntries(
   RARITY_ORDER.map((r) => [r, CARDS.filter((c) => c.rarity === r)]),
 ) as Record<Rarity, Card[]>;
+
+export const PACK_IMAGE = `/cards/${M6.setCode}/pack.webp`;
