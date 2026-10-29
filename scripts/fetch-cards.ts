@@ -5,16 +5,23 @@
  *   node scripts/fetch-cards.ts "MEGA 확장팩 「...」"
  *   MAX=3 node scripts/fetch-cards.ts                 # 앞에서 3장만 (테스트용)
  *
- * 결과: src/data/cards/<세트코드>.json, public/cards/<세트코드>/<번호>.png
+ * 결과: src/data/cards/<세트코드>.json, public/cards/<세트코드>/<번호>.webp, pack.webp
+ * 팩 이미지 주소는 PACK_URL 로 지정 (기본 세트는 내장)
  * 이미 받은 이미지는 건너뛰므로 중간에 끊겨도 다시 실행하면 이어서 받음.
  */
-import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const BASE = "https://pokemoncard.co.kr";
-const SET_NAME = process.argv[2] ?? "MEGA 확장팩 「스톰에메랄다」";
+const DEFAULT_SET = "MEGA 확장팩 「스톰에메랄다」";
+const SET_NAME = process.argv[2] ?? DEFAULT_SET;
+const PACK_URL =
+  process.env.PACK_URL ??
+  (SET_NAME === DEFAULT_SET
+    ? `${BASE}/s3.php?key=home%2Fdata%2Fdata1_www%2F2026%2F08%2F2026-08-11_14-11-21-60448-1786425081.png`
+    : undefined);
 const MAX = Number(process.env.MAX ?? Infinity);
 const DELAY_MS = 1000; // 서버 부담을 줄이기 위해 요청 간 간격
 const HEADERS = {
@@ -140,15 +147,15 @@ function parseDetail(html: string, cardNum: string): Omit<CardData, "image"> & {
   };
 }
 
-async function download(url: string, dest: string) {
+/** 이미지를 받아 webp 로 저장. 카드 원본이 868x1212(약 1.7MB)라 높이 700 으로 축소 */
+async function download(url: string, dest: string, { trim = false } = {}) {
   if (existsSync(dest)) return false;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`이미지 실패 ${res.status}: ${url}`);
-  await writeFile(dest, Buffer.from(await res.arrayBuffer()));
-  // 원본이 868x1212(약 1.7MB)라 macOS sips 로 축소. 실패하면 원본 유지
-  try {
-    execFileSync("sips", ["-Z", "700", dest], { stdio: "ignore" });
-  } catch {}
+  let img = sharp(Buffer.from(await res.arrayBuffer()));
+  // 팩 이미지는 투명 여백이 커서 잘라냄
+  img = trim ? img.trim() : img.resize({ height: 700, withoutEnlargement: true });
+  await img.webp({ quality: 85 }).toFile(dest);
   return true;
 }
 
@@ -165,7 +172,7 @@ async function main() {
 
     const dir = path.join("public", "cards", card.setCode);
     await mkdir(dir, { recursive: true });
-    const file = `${card.number.split("/")[0] || item.CardNum}.png`;
+    const file = `${card.number.split("/")[0] || item.CardNum}.webp`;
     const imageUrl = remoteImage.replace(/\?w=\d+$/, "");
     const fresh = imageUrl ? await download(imageUrl, path.join(dir, file)) : false;
     if (fresh) await sleep(DELAY_MS);
@@ -175,6 +182,7 @@ async function main() {
   }
 
   const setCode = cards[0].setCode;
+  if (PACK_URL) await download(PACK_URL, path.join("public", "cards", setCode, "pack.webp"), { trim: true });
   const out = path.join("src", "data", "cards", `${setCode}.json`);
   await mkdir(path.dirname(out), { recursive: true });
   await writeFile(out, JSON.stringify({ setName: SET_NAME, setCode, fetchedAt: new Date().toISOString(), cards }, null, 2));
