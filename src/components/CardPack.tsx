@@ -2,13 +2,10 @@
 
 import Image from "next/image";
 import { useRef, type PointerEvent } from "react";
-import { CARDS_BY_RARITY, SET_NAME } from "@/data/cards";
+import { PACK_IMAGE, SET_NAME } from "@/data/cards";
 import type { PackPhase } from "@/types/card";
 
-/** 팩 표지 카드: 세트 최고 레어도 */
-const COVER = CARDS_BY_RARITY.MUR[0];
-
-const TEAR_AT = 17; // 팩 상단에서 뜯기는 위치 (%)
+const TEAR_AT = 10; // 팩 상단(크림프 바로 아래)에서 뜯기는 위치 (%)
 
 /** 뜯긴 경계의 들쭉날쭉한 톱니 좌표 */
 const JAGGED = Array.from({ length: 19 }, (_, i) => {
@@ -22,51 +19,21 @@ const BODY_CLIP = `polygon(${JAGGED.join(", ")}, 100% 100%, 0% 100%)`;
 
 function PackArt() {
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-md bg-gradient-to-br from-[#ff5f6d] via-[#7b2ff7] to-[#1fa2ff]">
-      {/* 상하단 크림프 */}
-      <div className="crimp absolute inset-x-0 top-0 h-5 opacity-90" />
-      <div className="crimp absolute inset-x-0 bottom-0 h-5 opacity-90" />
-
-      {/* 배경 패턴 */}
-      <div
-        className="absolute inset-0 opacity-25"
-        style={{
-          backgroundImage:
-            "repeating-radial-gradient(circle at 50% 60%, transparent 0 18px, rgba(255,255,255,0.35) 18px 20px)",
-        }}
+    <div className="absolute inset-0">
+      <Image
+        src={PACK_IMAGE}
+        alt={SET_NAME}
+        fill
+        sizes="230px"
+        priority
+        draggable={false}
+        className="select-none object-fill"
       />
-
-      {/* 타이틀 */}
-      <div className="absolute inset-x-0 top-[22%] flex flex-col items-center">
-        <span className="text-[10px] font-bold tracking-[0.15em] text-white/80">{SET_NAME}</span>
-        <span
-          className="mt-1 text-4xl font-black italic tracking-tight text-yellow-300"
-          style={{ textShadow: "0 3px 0 #1d3a8a, 0 0 18px rgba(255,220,80,.6)" }}
-        >
-          GATTA!
-        </span>
-      </div>
-
-      {/* 대표 카드 */}
-      <div className="absolute inset-x-0 bottom-[13%] flex justify-center">
-        <div className="relative h-[196px] w-[140px] rotate-[-6deg]">
-          <div className="absolute -inset-4 rounded-full bg-yellow-200/40 blur-2xl" />
-          <Image
-            src={COVER.image}
-            alt={COVER.name}
-            fill
-            sizes="140px"
-            priority
-            className="rounded-md object-cover shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
-          />
-        </div>
-      </div>
-
-      <div className="absolute inset-x-0 bottom-8 text-center text-[10px] font-semibold tracking-widest text-white/80">
-        5 CARDS INSIDE
-      </div>
-
-      <div className="foil-sweep pointer-events-none absolute inset-0" />
+      {/* 광택은 팩 모양 안에서만 */}
+      <div
+        className="foil-sweep pointer-events-none absolute inset-0"
+        style={{ maskImage: `url(${PACK_IMAGE})`, maskSize: "100% 100%" }}
+      />
     </div>
   );
 }
@@ -108,7 +75,7 @@ export default function CardPack({ phase, onTear }: Props) {
           aria-label="카드팩 뜯기"
           onClick={onTear}
           disabled={!idle}
-          className={`relative block h-[420px] w-[260px] cursor-pointer outline-none transition-[filter] duration-300 hover:brightness-110 disabled:cursor-default ${
+          className={`relative block h-[440px] w-[211px] cursor-pointer outline-none transition-[filter] duration-300 hover:brightness-110 disabled:cursor-default ${
             tearing ? "pack-shake" : ""
           }`}
         >

@@ -81,11 +81,6 @@ body {
   60%, 100% { background-position: -100% 0; }
 }
 
-/* 팩 상단/하단 크림프(톱니) */
-.crimp {
-  background: repeating-linear-gradient(90deg, #d9d9e8 0 3px, #8e8ea8 3px 6px);
-}
-
 /* 뜯겨 날아가는 윗부분 */
 .pack-top-tear {
   animation: top-tear 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) 0.5s forwards;
@@ -155,59 +150,13 @@ body {
   to { transform: translateY(-40px) scale(1); opacity: 1; }
 }
 
-/* 펼쳐지며 자리로 날아가는 카드 */
-.card-deal {
-  opacity: 0;
-  animation: card-deal 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.15) var(--deal-delay, 0s) forwards;
-}
-@keyframes card-deal {
-  0% {
-    opacity: 0;
-    transform: translate(var(--from-x, 0), 120px) rotate(var(--from-rot, 0deg)) scale(0.6);
-  }
-  100% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
-}
-
 .card-3d {
   perspective: 1200px;
 }
-.card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-.card-inner.is-flipped {
-  transform: rotateY(180deg);
-}
-.card-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: 14px;
-  overflow: hidden;
-}
-.card-front {
-  transform: rotateY(180deg);
-}
-
 .card-tilt {
   transition: transform 0.2s ease-out;
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transform-style: preserve-3d;
-}
-
-/* 뒷면 대기 중 살짝 떨림 (레어 예고) */
-.card-tease {
-  animation: card-tease 1.6s ease-in-out infinite;
-}
-@keyframes card-tease {
-  0%, 80%, 100% { transform: translate(0, 0) rotate(0); }
-  84% { transform: translate(-2px, 0) rotate(-1deg); }
-  88% { transform: translate(2px, 0) rotate(1deg); }
-  92% { transform: translate(-1px, 0) rotate(0); }
 }
 
 /* 홀로그램: 포인터 위치(--mx, --my) 추적 */
@@ -304,13 +253,27 @@ body {
   }
 }
 
-/* 포켓몬 아트가 앞면 등장 시 튀어나옴 */
-.art-pop {
-  animation: art-pop 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s both;
+/* 카드 더미에서 맨 위 카드를 위로 넘김 (--drag-y: 손을 뗀 위치) */
+.card-swipe-up {
+  animation: card-swipe-up 0.42s cubic-bezier(0.4, 0, 0.7, 0.4) forwards;
+  pointer-events: none;
 }
-@keyframes art-pop {
-  from { transform: scale(0.4) translateY(20px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+@keyframes card-swipe-up {
+  from { transform: translateY(var(--drag-y, 0px)); opacity: 1; }
+  to { transform: translateY(-130vh) rotate(-14deg); opacity: 0.6; }
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-out both;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+.zoom-in {
+  animation: zoom-in 0.28s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+@keyframes zoom-in {
+  from { opacity: 0; transform: scale(0.85); }
 }
 
 .fade-up {
