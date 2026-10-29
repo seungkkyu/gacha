@@ -1,14 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { drawPack } from "@/lib/gacha";
-import type { PackPhase, PulledCard } from "@/types/pokemon";
+import type { PackPhase, PulledCard } from "@/types/card";
 
 interface PackState {
   phase: PackPhase;
   cards: PulledCard[];
   flipped: Record<string, boolean>;
-  /** 포켓몬 id → 보유 장수 */
-  collection: Record<number, number>;
+  /** 카드 번호 → 보유 장수 */
+  collection: Record<string, number>;
   packsOpened: number;
 
   tearPack: () => void;
@@ -51,7 +51,7 @@ export const usePackStore = create<PackState>()(
       reset: () => set({ phase: "idle", cards: [], flipped: {} }),
     }),
     {
-      name: "gatta-collection",
+      name: "gatta-collection-m6",
       skipHydration: true,
       // 진행 중인 개봉 상태는 저장하지 않고 도감만 유지
       partialize: (s) => ({ collection: s.collection, packsOpened: s.packsOpened }),
