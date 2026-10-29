@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 공식 사이트에서 받은 카드 이미지 (저작권 - 저장소에 올리지 않음)
+/public/cards
